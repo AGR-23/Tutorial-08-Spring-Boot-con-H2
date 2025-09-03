@@ -1,34 +1,50 @@
 package com.eafit.nutrition.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import java.time.LocalDate;
+import java.util.HashMap;
+import java.util.Map;
 
 @Entity
 @Table(name = "medicion")
 public class Medicion {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "fecha", nullable = false)
+    @Column(name="fecha", nullable=false)
     private LocalDate fecha;
 
-    @Column(name = "peso", nullable = false)
+    @Column(name="peso", nullable=false)
     private Double peso; // kg
 
-    @Column(name = "altura", nullable = false)
+    @Column(name="altura", nullable=false)
     private Double altura; // cm
 
-    @Column(name = "circunferencia_cintura")
+    @Column(name="circunferencia_cintura")
     private Double circunferenciaCintura;
 
-    @Column(name = "circunferencia_cadera")
+    @Column(name="circunferencia_cadera")
     private Double circunferenciaCadera;
 
-    @Column(name = "porcentaje_grasa_corporal")
+    @Column(name="porcentaje_grasa_corporal")
     private Double porcentajeGrasaCorporal;
 
-    // Constructores
+    // Muchos a uno con Paciente (EAGER)
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "paciente_id", nullable = false)
+    @JsonIgnoreProperties({"notas", "nutricionista"}) // evita ciclos
+    private Paciente paciente;
+
+    // Muchos a uno con Nutricionista (EAGER)
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "nutricionista_id", nullable = false)
+    @JsonIgnoreProperties({"pacientes", "notas"}) // evita ciclos
+    private Nutricionista nutricionista;
+
     public Medicion() {}
 
     public Medicion(Double peso, Double altura) {
@@ -37,25 +53,62 @@ public class Medicion {
         this.altura = altura;
     }
 
-    // Getters y Setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    // Utilidad: IMC
+    public Double calcularIMC() {
+        if (altura == null || peso == null || altura <= 0) return null;
+        double m = altura / 100.0;
+        return peso / (m * m);
+    }
 
-    public LocalDate getFecha() { return fecha; }
-    public void setFecha(LocalDate fecha) { this.fecha = fecha; }
+    // Propiedades "planas" para evitar expandir relaciones en JSON
+    @JsonProperty("pacienteInfo")
+    public Map<String, Object> getPacienteInfo() {
+        if (paciente == null) return null;
+        Map<String, Object> info = new HashMap<>();
+        info.put("id", paciente.getId());
+        info.put("nombre", paciente.getNombre());
+        info.put("apellido", paciente.getApellido());
+        info.put("email", paciente.getEmail());
+        return info;
+    }
 
-    public Double getPeso() { return peso; }
-    public void setPeso(Double peso) { this.peso = peso; }
+    @JsonProperty("nutricionistaInfo")
+    public Map<String, Object> getNutricionistaInfo() {
+        if (nutricionista == null) return null;
+        Map<String, Object> info = new HashMap<>();
+        info.put("id", nutricionista.getId());
+        info.put("nombre", nutricionista.getNombre());
+        info.put("apellido", nutricionista.getApellido());
+        info.put("numeroLicencia", nutricionista.getNumeroLicencia());
+        info.put("especialidad", nutricionista.getEspecialidad());
+        return info;
+    }
 
-    public Double getAltura() { return altura; }
-    public void setAltura(Double altura) { this.altura = altura; }
+    // Getters/Setters
+    public Long getId(){ return id; }
+    public void setId(Long id){ this.id = id; }
 
-    public Double getCircunferenciaCintura() { return circunferenciaCintura; }
-    public void setCircunferenciaCintura(Double circunferenciaCintura) { this.circunferenciaCintura = circunferenciaCintura; }
+    public LocalDate getFecha(){ return fecha; }
+    public void setFecha(LocalDate fecha){ this.fecha = fecha; }
 
-    public Double getCircunferenciaCadera() { return circunferenciaCadera; }
-    public void setCircunferenciaCadera(Double circunferenciaCadera) { this.circunferenciaCadera = circunferenciaCadera; }
+    public Double getPeso(){ return peso; }
+    public void setPeso(Double peso){ this.peso = peso; }
 
-    public Double getPorcentajeGrasaCorporal() { return porcentajeGrasaCorporal; }
-    public void setPorcentajeGrasaCorporal(Double porcentajeGrasaCorporal) { this.porcentajeGrasaCorporal = porcentajeGrasaCorporal; }
+    public Double getAltura(){ return altura; }
+    public void setAltura(Double altura){ this.altura = altura; }
+
+    public Double getCircunferenciaCintura(){ return circunferenciaCintura; }
+    public void setCircunferenciaCintura(Double circunferenciaCintura){ this.circunferenciaCintura = circunferenciaCintura; }
+
+    public Double getCircunferenciaCadera(){ return circunferenciaCadera; }
+    public void setCircunferenciaCadera(Double circunferenciaCadera){ this.circunferenciaCadera = circunferenciaCadera; }
+
+    public Double getPorcentajeGrasaCorporal(){ return porcentajeGrasaCorporal; }
+    public void setPorcentajeGrasaCorporal(Double porcentajeGrasaCorporal){ this.porcentajeGrasaCorporal = porcentajeGrasaCorporal; }
+
+    public Paciente getPaciente(){ return paciente; }
+    public void setPaciente(Paciente paciente){ this.paciente = paciente; }
+
+    public Nutricionista getNutricionista(){ return nutricionista; }
+    public void setNutricionista(Nutricionista nutricionista){ this.nutricionista = nutricionista; }
 }

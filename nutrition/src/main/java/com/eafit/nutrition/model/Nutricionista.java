@@ -1,61 +1,96 @@
 package com.eafit.nutrition.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
-import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
-@Table(name = "paciente")
-public class Paciente {
+@Table(name = "nutricionista")
+public class Nutricionista {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "nombre", nullable = false, length = 100)
+    @Column(name="nombre", nullable=false, length=100)
     private String nombre;
 
-    @Column(name = "apellido", nullable = false, length = 100)
+    @Column(name="apellido", nullable=false, length=100)
     private String apellido;
 
-    @Column(name = "fecha_nacimiento")
-    private LocalDate fechaNacimiento;
+    @Column(name="numero_licencia", nullable=false, length=50, unique=true)
+    private String numeroLicencia;
 
-    @Column(name = "email", nullable = false, length = 150, unique = true)
+    @Column(name="especialidad", length=100)
+    private String especialidad;
+
+    @Column(name="email", nullable=false, length=150, unique=true)
     private String email;
 
-    @Column(name = "telefono", length = 20)
+    @Column(name="telefono", length=20)
     private String telefono;
 
-    @Column(name = "activo", nullable = false)
+    @Column(name="activo", nullable=false)
     private boolean activo = true;
 
-    // Constructores
-    public Paciente() {}
+    // Uno a muchos con Paciente (LAZY)
+    @OneToMany(mappedBy = "nutricionista", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnoreProperties({"nutricionista", "notas"}) // evita ciclos
+    private List<Paciente> pacientes = new ArrayList<>();
 
-    public Paciente(String nombre, String apellido, String email) {
+    // Uno a muchos con Nota (EAGER)
+    @OneToMany(mappedBy = "nutricionista", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @JsonIgnoreProperties({"nutricionista", "paciente"}) // evita ciclos
+    private List<Nota> notas = new ArrayList<>();
+
+    public Nutricionista() {}
+
+    public Nutricionista(String nombre, String apellido, String numeroLicencia, String email) {
         this.nombre = nombre;
         this.apellido = apellido;
+        this.numeroLicencia = numeroLicencia;
         this.email = email;
     }
 
-    // Getters y Setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    // Helpers
+    public void addPaciente(Paciente p){
+        pacientes.add(p);
+        p.setNutricionista(this);
+    }
+    public void addNota(Nota n){
+        notas.add(n);
+        n.setNutricionista(this);
+    }
 
-    public String getNombre() { return nombre; }
-    public void setNombre(String nombre) { this.nombre = nombre; }
+    // Getters/Setters
+    public Long getId(){ return id; }
+    public void setId(Long id){ this.id = id; }
 
-    public String getApellido() { return apellido; }
-    public void setApellido(String apellido) { this.apellido = apellido; }
+    public String getNombre(){ return nombre; }
+    public void setNombre(String nombre){ this.nombre = nombre; }
 
-    public LocalDate getFechaNacimiento() { return fechaNacimiento; }
-    public void setFechaNacimiento(LocalDate fechaNacimiento) { this.fechaNacimiento = fechaNacimiento; }
+    public String getApellido(){ return apellido; }
+    public void setApellido(String apellido){ this.apellido = apellido; }
 
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
+    public String getNumeroLicencia(){ return numeroLicencia; }
+    public void setNumeroLicencia(String numeroLicencia){ this.numeroLicencia = numeroLicencia; }
 
-    public String getTelefono() { return telefono; }
-    public void setTelefono(String telefono) { this.telefono = telefono; }
+    public String getEspecialidad(){ return especialidad; }
+    public void setEspecialidad(String especialidad){ this.especialidad = especialidad; }
 
-    public boolean isActivo() { return activo; }
-    public void setActivo(boolean activo) { this.activo = activo; }
+    public String getEmail(){ return email; }
+    public void setEmail(String email){ this.email = email; }
+
+    public String getTelefono(){ return telefono; }
+    public void setTelefono(String telefono){ this.telefono = telefono; }
+
+    public boolean isActivo(){ return activo; }
+    public void setActivo(boolean activo){ this.activo = activo; }
+
+    public List<Paciente> getPacientes(){ return pacientes; }
+    public void setPacientes(List<Paciente> pacientes){ this.pacientes = pacientes; }
+
+    public List<Nota> getNotas(){ return notas; }
+    public void setNotas(List<Nota> notas){ this.notas = notas; }
 }
